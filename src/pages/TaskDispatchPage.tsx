@@ -6,6 +6,7 @@ import useTaskStore from '@/store/useTaskStore';
 import { users } from '@/data/mockData';
 import type { Article } from '@/types';
 import FilterBar from '@/components/tasks/FilterBar';
+import CreateTaskModal from '@/components/tasks/CreateTaskModal';
 import StatsDashboard from '@/components/tasks/StatsDashboard';
 import ArticleList from '@/components/tasks/ArticleList';
 import AssignModal from '@/components/tasks/AssignModal';
@@ -16,6 +17,7 @@ import Tag from '@/components/common/Tag';
 export default function TaskDispatchPage() {
   const { clients, events, selectedEventIds, toggleEvent, selectedClientId } = useTaskStore();
   const [assignOpen, setAssignOpen] = useState(false);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set(clients.map((c) => c.id)));
 
   const analysts = useMemo(
@@ -66,7 +68,7 @@ export default function TaskDispatchPage() {
 
   return (
     <div className="min-h-full flex flex-col bg-surface-bg">
-      <FilterBar />
+      <FilterBar onCreateTask={() => setCreateTaskOpen(true)} />
 
       <div className="flex-1 p-6 space-y-4 overflow-hidden">
         <motion.div
@@ -290,6 +292,7 @@ export default function TaskDispatchPage() {
       </div>
 
       <AssignModal open={assignOpen} onClose={() => setAssignOpen(false)} />
+      <CreateTaskModal open={createTaskOpen} onClose={() => setCreateTaskOpen(false)} />
     </div>
   );
 }

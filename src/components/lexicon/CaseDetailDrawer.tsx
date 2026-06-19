@@ -337,7 +337,7 @@ export default function CaseDetailDrawer() {
                 <Button
                   variant="divergence"
                   className="w-full"
-                  onClick={() => navigate('/dual-review')}
+                  onClick={() => navigate('/review/' + selectedCase.articleSnapshot.id)}
                 >
                   引用到双人判读
                   <ExternalLink className="w-4 h-4 ml-1.5" />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, RotateCcw, UserCheck } from 'lucide-react';
+import { Check, RotateCcw, UserCheck, Archive } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { RulingDecision } from '@/types';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 interface RulingBarProps {
   onSubmit?: (decision: RulingDecision, opinion: string) => void;
   disabled?: boolean;
+  onArchive?: () => void;
+  showArchive?: boolean;
 }
 
 const rulingOptions = [
@@ -33,7 +35,7 @@ const rulingOptions = [
   },
 ] as const;
 
-export default function RulingBar({ onSubmit, disabled = false }: RulingBarProps) {
+export default function RulingBar({ onSubmit, disabled = false, onArchive, showArchive }: RulingBarProps) {
   const [decision, setDecision] = useState<RulingDecision | null>(null);
   const [opinion, setOpinion] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -154,6 +156,16 @@ export default function RulingBar({ onSubmit, disabled = false }: RulingBarProps
               )}
             </AnimatePresence>
           </button>
+          {showArchive && (
+            <button
+              type="button"
+              onClick={onArchive}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-white/15 text-white hover:bg-white/25 border border-white/20"
+            >
+              <Archive className="w-4 h-4" />
+              归入口径复盘库
+            </button>
+          )}
         </div>
       </div>
     </div>

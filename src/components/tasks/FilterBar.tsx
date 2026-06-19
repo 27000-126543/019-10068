@@ -15,7 +15,11 @@ const statusOptions: { value: TaskStatus | 'all'; label: string; color: string }
   { value: 'completed', label: '已完成', color: 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/30' },
 ];
 
-export default function FilterBar() {
+interface FilterBarProps {
+  onCreateTask: () => void;
+}
+
+export default function FilterBar({ onCreateTask }: FilterBarProps) {
   const {
     clients,
     events,
@@ -130,6 +134,9 @@ export default function FilterBar() {
           onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
           className="px-2.5 py-1.5 text-sm bg-white/10 border border-white/20 rounded text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-brand-400 w-[130px]"
         />
+        {dateRange.end && (
+          <span className="text-[10px] text-white/40">含当天</span>
+        )}
       </div>
 
       <div className="h-6 w-px bg-white/20" />
@@ -164,7 +171,7 @@ export default function FilterBar() {
         />
       </div>
 
-      <Button variant="primary" size="md" className="shrink-0">
+      <Button variant="primary" size="md" className="shrink-0" onClick={onCreateTask}>
         <Plus className="w-4 h-4 mr-1" />
         新建任务
       </Button>

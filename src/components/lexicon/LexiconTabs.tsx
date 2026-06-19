@@ -1,8 +1,8 @@
-import { Briefcase, FileText, Radio } from 'lucide-react';
+import { Briefcase, FileText, Radio, GraduationCap } from 'lucide-react';
 import useLexiconStore from '@/store/useLexiconStore';
 import { cn } from '@/lib/utils';
 
-type LexiconTab = 'cases' | 'rules' | 'sources';
+type LexiconTab = 'cases' | 'rules' | 'sources' | 'training';
 
 interface TabItem {
   key: LexiconTab;
@@ -12,13 +12,14 @@ interface TabItem {
 }
 
 export default function LexiconTabs() {
-  const { activeTab, toggleActiveTab, typicalCases, rules, mediaProfiles } =
+  const { activeTab, toggleActiveTab, typicalCases, rules, mediaProfiles, trainingHistory } =
     useLexiconStore();
 
   const tabs: TabItem[] = [
     { key: 'cases', label: '典型案例', icon: Briefcase, count: typicalCases.length },
     { key: 'rules', label: '解读规则', icon: FileText, count: rules.length },
     { key: 'sources', label: '消息源档案', icon: Radio, count: mediaProfiles.length },
+    { key: 'training', label: '口径训练', icon: GraduationCap, count: trainingHistory.length },
   ];
 
   return (

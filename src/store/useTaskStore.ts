@@ -1,6 +1,40 @@
 import { create } from 'zustand';
 import type { Article, Client, Event, TaskStatus } from '@/types';
-import { articles, clients, events } from '@/data/mockData';
+import { articles as mockArticles, clients as mockClients, events as mockEvents } from '@/data/mockData';
+
+const STORAGE_KEY = 'opinion-workbench-tasks';
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw) as T;
+  } catch {}
+  return fallback;
+}
+
+function saveToStorage<T>(key: string, data: T) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch {}
+}
+
+interface CreateTaskPayload {
+  clientName: string;
+  clientIndustry: string;
+  eventName: string;
+  eventTags: string[];
+  startTime: string;
+  endTime: string;
+  articlesData: Array<{
+    title: string;
+    content: string;
+    mediaName: string;
+    mediaProperty: Article['mediaProperty'];
+    publishTime: string;
+    repostCount: number;
+    keywords: string[];
+  }>;
+}
 
 interface TaskState {
   articles: Article[];
@@ -29,13 +63,28 @@ interface TaskState {
   getFilteredArticles: () => Article[];
   getStats: () => { pending: number; annotating: number; divergent: number; completed: number };
   updateArticleStatus: (articleId: string, status: TaskStatus) => void;
+  createTask: (payload: CreateTaskPayload) => void;
 }
 
+function persist(state: { articles: Article[]; clients: Client[]; events: Event[] }) {
+  saveToStorage(STORAGE_KEY, state);
+}
+
+const initialData = loadFromStorage<{
+  articles: Article[];
+  clients: Client[];
+  events: Event[];
+}>(STORAGE_KEY, {
+  articles: [...mockArticles],
+  clients: [...mockClients],
+  events: [...mockEvents],
+});
+
 const useTaskStore = create<TaskState>((set, get) => ({
-  articles: [...articles],
-  clients: [...clients],
-  events: [...events],
-  selectedClientId: clients[0]?.id ?? null,
+  articles: initialData.articles,
+  clients: initialData.clients,
+  events: initialData.events,
+  selectedClientId: initialData.clients[0]?.id ?? null,
   selectedEventIds: [],
   statusFilter: 'all',
   dateRange: { start: '', end: '' },
@@ -93,22 +142,28 @@ const useTaskStore = create<TaskState>((set, get) => ({
     articleIds: string[],
     assigneeAId: string,
     assigneeBId: string,
-    note?: string,
+    _note?: string,
   ) => {
     const now = new Date().toISOString();
-    set((state) => ({
-      articles: state.articles.map((a) =>
-        articleIds.includes(a.id)
-          ? {
-              ...a,
-              status: 'annotating' as TaskStatus,
-              assigneeA: assigneeAId,
-              assigneeB: assigneeBId,
-              assignedAt: now,
-            }
-          : a,
-      ),
-    }));
+    set((state) => {
+      const updated = {
+        articles: state.articles.map((a) =>
+          articleIds.includes(a.id)
+            ? {
+                ...a,
+                status: 'annotating' as TaskStatus,
+                assigneeA: assigneeAId,
+                assigneeB: assigneeBId,
+                assignedAt: now,
+              }
+            : a,
+        ),
+        clients: state.clients,
+        events: state.events,
+      };
+      persist(updated);
+      return { articles: updated.articles };
+    });
   },
 
   getFilteredArticles: () => {
@@ -118,8 +173,14 @@ const useTaskStore = create<TaskState>((set, get) => ({
       if (state.selectedEventIds.length > 0 && !state.selectedEventIds.includes(a.eventId))
         return false;
       if (state.statusFilter !== 'all' && a.status !== state.statusFilter) return false;
-      if (state.dateRange.start && a.publishTime < state.dateRange.start) return false;
-      if (state.dateRange.end && a.publishTime > state.dateRange.end) return false;
+      if (state.dateRange.start) {
+        const articleDate = a.publishTime.slice(0, 10);
+        if (articleDate < state.dateRange.start) return false;
+      }
+      if (state.dateRange.end) {
+        const articleDate = a.publishTime.slice(0, 10);
+        if (articleDate > state.dateRange.end) return false;
+      }
       if (state.keyword) {
         const kw = state.keyword.toLowerCase();
         const titleMatch = a.title.toLowerCase().includes(kw);
@@ -141,11 +202,67 @@ const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   updateArticleStatus: (articleId: string, status: TaskStatus) => {
-    set((state) => ({
-      articles: state.articles.map((a) =>
-        a.id === articleId ? { ...a, status } : a,
-      ),
+    set((state) => {
+      const updated = {
+        articles: state.articles.map((a) =>
+          a.id === articleId ? { ...a, status } : a,
+        ),
+        clients: state.clients,
+        events: state.events,
+      };
+      persist(updated);
+      return { articles: updated.articles };
+    });
+  },
+
+  createTask: (payload: CreateTaskPayload) => {
+    const clientId = `c_${Date.now()}`;
+    const eventId = `e_${Date.now()}`;
+    const newClient: Client = {
+      id: clientId,
+      name: payload.clientName,
+      industry: payload.clientIndustry,
+    };
+    const newEvent: Event = {
+      id: eventId,
+      clientId,
+      name: payload.eventName,
+      tags: payload.eventTags,
+      startTime: payload.startTime,
+      endTime: payload.endTime,
+    };
+    const newArticles: Article[] = payload.articlesData.map((ad, i) => ({
+      id: `a_${Date.now()}_${i}`,
+      eventId,
+      clientId,
+      title: ad.title,
+      content: ad.content,
+      mediaName: ad.mediaName,
+      mediaProperty: ad.mediaProperty,
+      publishTime: ad.publishTime,
+      repostCount: ad.repostCount,
+      repostRelations: [],
+      historyArticles: [],
+      keywords: ad.keywords,
+      status: 'pending' as TaskStatus,
     }));
+
+    set((state) => {
+      const updated = {
+        articles: [...newArticles, ...state.articles],
+        clients: [...state.clients, newClient],
+        events: [...state.events, newEvent],
+      };
+      persist(updated);
+      return {
+        articles: updated.articles,
+        clients: updated.clients,
+        events: updated.events,
+        selectedClientId: clientId,
+        selectedEventIds: [eventId],
+        dateRange: { start: payload.startTime.slice(0, 10), end: payload.endTime.slice(0, 10) },
+      };
+    });
   },
 }));
 

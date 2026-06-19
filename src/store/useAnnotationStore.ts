@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { Annotation, Ruling } from '@/types';
+import type { Annotation, Ruling, TypicalCase } from '@/types';
 import { annotations, rulings } from '@/data/mockData';
 import useTaskStore from './useTaskStore';
+import useLexiconStore from './useLexiconStore';
 
 interface AnnotationState {
   annotations: Annotation[];
@@ -9,6 +10,7 @@ interface AnnotationState {
   getAnnotationsByArticle: (articleId: string) => { a?: Annotation; b?: Annotation };
   saveAnnotation: (annotation: Annotation) => void;
   saveRuling: (ruling: Ruling, articleId: string) => void;
+  archiveToLexicon: (articleId: string, tags?: string[]) => void;
 }
 
 const useAnnotationStore = create<AnnotationState>((set, get) => ({
@@ -55,6 +57,31 @@ const useAnnotationStore = create<AnnotationState>((set, get) => ({
       return { rulings: updatedRulings };
     });
     useTaskStore.getState().updateArticleStatus(articleId, 'completed');
+  },
+
+  archiveToLexicon: (articleId: string, tags?: string[]) => {
+    const state = get();
+    const article = useTaskStore.getState().articles.find((a) => a.id === articleId);
+    if (!article) return;
+
+    const anns = state.getAnnotationsByArticle(articleId);
+    if (!anns.a || !anns.b) return;
+
+    const ruling = state.rulings.find((r) => r.articleId === articleId);
+    if (!ruling) return;
+
+    const typicalCase: TypicalCase = {
+      id: `tc_${Date.now()}`,
+      articleSnapshot: { ...article },
+      annotationA: { ...anns.a },
+      annotationB: { ...anns.b },
+      ruling: { ...ruling },
+      tags: tags || [ruling.finalSentiment, `风险${ruling.finalRiskLevel}级`, article.mediaProperty],
+      summary: ruling.typicalReason || ruling.opinion,
+      archivedAt: new Date().toISOString(),
+    };
+
+    useLexiconStore.getState().addTypicalCase(typicalCase);
   },
 }));
 

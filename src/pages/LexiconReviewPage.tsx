@@ -6,6 +6,7 @@ import LexiconTabs from '@/components/lexicon/LexiconTabs';
 import RuleCloud from '@/components/lexicon/RuleCloud';
 import SourceCard from '@/components/lexicon/SourceCard';
 import TypicalCaseCard from '@/components/lexicon/TypicalCaseCard';
+import TrainingView from '@/components/lexicon/TrainingView';
 import CaseDetailDrawer from '@/components/lexicon/CaseDetailDrawer';
 import type { SentimentType, RiskLevel, MediaProperty } from '@/types';
 
@@ -229,6 +230,7 @@ export default function LexiconReviewPage() {
           {activeTab === 'cases' && <TypicalCaseCard />}
           {activeTab === 'rules' && <RuleCloud />}
           {activeTab === 'sources' && <SourceCard />}
+          {activeTab === 'training' && <TrainingView />}
         </div>
       </div>
 

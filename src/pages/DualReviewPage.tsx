@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import useTaskStore from '@/store/useTaskStore';
 import useAuthStore from '@/store/useAuthStore';
 import useAnnotationStore from '@/store/useAnnotationStore';
@@ -21,7 +21,7 @@ export default function DualReviewPage() {
   const { articleId } = useParams<{ articleId: string }>();
   const articles = useTaskStore((s) => s.articles);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const { getAnnotationsByArticle, saveAnnotation, saveRuling } = useAnnotationStore();
+  const { getAnnotationsByArticle, saveAnnotation, saveRuling, archiveToLexicon } = useAnnotationStore();
 
   const article = useMemo(
     () => articles.find((a) => a.id === articleId),
@@ -49,6 +49,13 @@ export default function DualReviewPage() {
   );
 
   const isSeniorAnalyst = currentUser?.role === 'senior_analyst';
+  const [archived, setArchived] = useState(false);
+
+  const handleArchive = () => {
+    if (!article) return;
+    archiveToLexicon(article.id);
+    setArchived(true);
+  };
 
   const handleSaveAnnotation = (
     analyst: 'A' | 'B',
@@ -201,10 +208,26 @@ export default function DualReviewPage() {
         <DivergencePanel divergence={divergence} />
       </motion.div>
 
+      {article.status === 'completed' && archived && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center gap-3"
+        >
+          <CheckCircle className="w-5 h-5 text-emerald-500" />
+          <div>
+            <p className="text-sm font-medium text-emerald-800">已归入口径复盘库</p>
+            <p className="text-xs text-emerald-600 mt-0.5">可在「口径复盘」页面查看此案例</p>
+          </div>
+        </motion.div>
+      )}
+
       {isSeniorAnalyst && (
         <RulingBar
           onSubmit={handleRulingSubmit}
           disabled={!annotations.a || !annotations.b}
+          onArchive={handleArchive}
+          showArchive={article?.status === 'completed' && !archived}
         />
       )}
     </div>

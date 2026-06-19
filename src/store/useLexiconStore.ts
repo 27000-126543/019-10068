@@ -6,10 +6,25 @@ import type {
   SentimentType,
   RiskLevel,
   MediaProperty,
+  Annotation,
 } from '@/types';
 import { rules, mediaProfiles, typicalCases } from '@/data/mockData';
 
-type LexiconTab = 'cases' | 'rules' | 'sources';
+type LexiconTab = 'cases' | 'rules' | 'sources' | 'training';
+
+interface TrainingAnswer {
+  caseId: string;
+  sentiment: SentimentType;
+  riskLevel: RiskLevel;
+  reason: string;
+  submittedAt: string;
+}
+
+interface TrainingSession {
+  caseId: string;
+  answer: TrainingAnswer | null;
+  revealed: boolean;
+}
 
 interface LexiconState {
   rules: InterpretationRule[];
@@ -21,6 +36,8 @@ interface LexiconState {
   filterMediaProperty: MediaProperty | 'all';
   searchKeyword: string;
   activeTab: LexiconTab;
+  trainingSession: TrainingSession | null;
+  trainingHistory: TrainingAnswer[];
   setFilterSentiment: (s: SentimentType | 'all') => void;
   setFilterRisk: (r: RiskLevel | 'all') => void;
   setFilterMediaProperty: (m: MediaProperty | 'all') => void;
@@ -30,8 +47,13 @@ interface LexiconState {
   addRule: (
     rule: Omit<InterpretationRule, 'id' | 'addedAt' | 'usageCount'>,
   ) => void;
+  addTypicalCase: (tc: TypicalCase) => void;
   getFilteredCases: () => TypicalCase[];
   getFilteredRules: () => InterpretationRule[];
+  startTraining: (caseId: string) => void;
+  submitTrainingAnswer: (answer: Omit<TrainingAnswer, 'caseId' | 'submittedAt'>) => void;
+  revealTraining: () => void;
+  endTraining: () => void;
 }
 
 const useLexiconStore = create<LexiconState>((set, get) => ({
@@ -44,6 +66,8 @@ const useLexiconStore = create<LexiconState>((set, get) => ({
   filterMediaProperty: 'all',
   searchKeyword: '',
   activeTab: 'cases',
+  trainingSession: null,
+  trainingHistory: [],
 
   setFilterSentiment: (s: SentimentType | 'all') => {
     set({ filterSentiment: s });
@@ -81,6 +105,10 @@ const useLexiconStore = create<LexiconState>((set, get) => ({
     set((state) => ({ rules: [...state.rules, newRule] }));
   },
 
+  addTypicalCase: (tc: TypicalCase) => {
+    set((state) => ({ typicalCases: [tc, ...state.typicalCases] }));
+  },
+
   getFilteredCases: () => {
     const state = get();
     return state.typicalCases.filter((tc) => {
@@ -116,6 +144,38 @@ const useLexiconStore = create<LexiconState>((set, get) => ({
         r.phrase.toLowerCase().includes(kw) ||
         r.description.toLowerCase().includes(kw),
     );
+  },
+
+  startTraining: (caseId: string) => {
+    set({
+      trainingSession: { caseId, answer: null, revealed: false },
+    });
+  },
+
+  submitTrainingAnswer: (answer: Omit<TrainingAnswer, 'caseId' | 'submittedAt'>) => {
+    set((state) => {
+      if (!state.trainingSession) return state;
+      const full: TrainingAnswer = {
+        ...answer,
+        caseId: state.trainingSession.caseId,
+        submittedAt: new Date().toISOString(),
+      };
+      return {
+        trainingSession: { ...state.trainingSession, answer: full },
+        trainingHistory: [...state.trainingHistory, full],
+      };
+    });
+  },
+
+  revealTraining: () => {
+    set((state) => {
+      if (!state.trainingSession) return state;
+      return { trainingSession: { ...state.trainingSession, revealed: true } };
+    });
+  },
+
+  endTraining: () => {
+    set({ trainingSession: null });
   },
 }));
 
