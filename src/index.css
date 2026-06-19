@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand-900: #1e293b;
+    --color-brand-500: #2563eb;
+    --color-divergence: #7c3aed;
+    --color-sentiment-positive: #059669;
+    --color-sentiment-neutral: #64748b;
+    --color-sentiment-negative: #d97706;
+    --color-sentiment-severe: #dc2626;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: '"Noto Sans SC"', '"Source Han Sans SC"', '"思源黑体"', Inter, system-ui, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: '"Noto Serif SC"', '"Source Han Serif SC"', '"思源宋体"', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .sentiment-gradient-1 {
+    background: linear-gradient(90deg, rgba(5, 150, 105, 0.2), rgba(5, 150, 105, 0));
+  }
+  .sentiment-gradient-2 {
+    background: linear-gradient(90deg, rgba(100, 116, 139, 0.2), rgba(100, 116, 139, 0));
+  }
+  .sentiment-gradient-3 {
+    background: linear-gradient(90deg, rgba(217, 119, 6, 0.25), rgba(217, 119, 6, 0));
+  }
+  .sentiment-gradient-4 {
+    background: linear-gradient(90deg, rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0));
+  }
+  .sentiment-gradient-5 {
+    background: linear-gradient(90deg, rgba(127, 29, 29, 0.4), rgba(127, 29, 29, 0));
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+
+  .keyword-highlight-positive {
+    background-color: rgba(5, 150, 105, 0.12);
+    border-bottom: 1px solid rgba(5, 150, 105, 0.3);
+  }
+  .keyword-highlight-negative {
+    background-color: rgba(220, 38, 38, 0.1);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.28);
+  }
+
+  .animate-stagger > * {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: staggerIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes staggerIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
